@@ -41,6 +41,14 @@ async function run() {
 
       res.send(result);
     });
+
+    //get featured cars data
+    app.get("/featured", async (req, res) => {
+      const cursor = carsCollection.find().limit(6);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+    
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
