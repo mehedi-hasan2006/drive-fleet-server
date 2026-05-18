@@ -10,8 +10,6 @@ dotenv.config();
 app.use(cors());
 app.use(express.json());
 
-
-
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(process.env.DB_URI, {
   serverApi: {
@@ -23,21 +21,26 @@ const client = new MongoClient(process.env.DB_URI, {
 
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!",
-    );
+
+    const db = client.db("drive-fleet");
+    const carsCollection = db.collection("cars");
+
+    app.get("/cars", async (req, res) => {
+      const cursor = carsCollection.find();
+      const result = await cursor.toArray();
+      console.log(result);
+
+      res.send(result);
+    });
+
+    
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
   }
 }
 run().catch(console.dir);
-
-
 
 app.get("/", (req, res) => {
   res.send("server is running");
