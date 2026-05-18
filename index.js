@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
@@ -26,15 +26,21 @@ async function run() {
     const db = client.db("drive-fleet");
     const carsCollection = db.collection("cars");
 
+    // get all the cars
     app.get("/cars", async (req, res) => {
       const cursor = carsCollection.find();
       const result = await cursor.toArray();
-      console.log(result);
-
       res.send(result);
     });
 
-    
+    //get signle car by id
+    app.get("/cars/:carId", async (req, res) => {
+      const { carId } = req.params;
+      const query = { _id: new ObjectId(carId) };
+      const result = await carsCollection.findOne(query);
+
+      res.send(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
