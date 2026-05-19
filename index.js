@@ -53,10 +53,20 @@ async function run() {
 
     const db = client.db("drive-fleet");
     const carsCollection = db.collection("cars");
+    const bookingsCollection = db.collection("bookings");
 
     // get all the cars
     app.get("/cars", async (req, res) => {
-      const cursor = carsCollection.find();
+      const { search } = req.query;
+
+      let cursor;
+
+      if (search) {
+        cursor = carsCollection.find({ title: search });
+      } else {
+        cursor = carsCollection.find();
+      }
+
       const result = await cursor.toArray();
       res.send(result);
     });
@@ -74,6 +84,35 @@ async function run() {
     app.get("/featured", async (req, res) => {
       const cursor = carsCollection.find().limit(6);
       const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    //booking system
+    app.patch("bookings/:carId", verifyToken, async (req, res) => {
+      const { carId } = req.params;
+      const bookings = req.body;
+
+      const cars = await carsCollection.findOne({ _id: new ObjectId(carId) });
+
+      if (!cars) {
+        res.status(404).json({ message: "Car Not Found!" });
+      }
+
+      await carsCollection.updateOne(
+        { _id: new ObjectId(carId) },
+        {
+          $inc: { bookingsCount: 1 },
+          $set: {
+            lastBookingAt: new Date(),
+          },
+        },
+      );
+
+      const result = await bookingsCollection.insertOne({
+        ...bookings,
+        bookingAt: new Date(),
+      });
+
       res.send(result);
     });
   } finally {
