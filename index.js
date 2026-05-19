@@ -87,8 +87,8 @@ async function run() {
       res.send(result);
     });
 
-    //booking system
-    app.patch("bookings/:carId", verifyToken, async (req, res) => {
+    //booking system for store data
+    app.patch("/bookings/:carId", verifyToken, async (req, res) => {
       const { carId } = req.params;
       const bookings = req.body;
 
@@ -115,6 +115,17 @@ async function run() {
 
       res.send(result);
     });
+
+    // get api for accessing booking data from client
+    app.get("/bookings/:userId", verifyToken, async (req, res) => {
+      const { userId } = req.params;
+      const result = await bookingsCollection
+        .find({ userId: userId })
+        .toArray();
+
+      res.send(result);
+    });
+    
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
