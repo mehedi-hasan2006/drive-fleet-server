@@ -2,6 +2,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
 const port = process.env.PORT || 5000;
 const app = express();
 
@@ -9,6 +10,33 @@ dotenv.config();
 
 app.use(cors());
 app.use(express.json());
+
+// midlware function
+const midlwareFunc = (req, res, next) => {
+  next();
+};
+
+// verify token midleware
+const verifyToken = async (req, res, next) => {
+  const { authorization } = req.headers;
+  const token = authorization?.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  try {
+    const JWKS = createRemoteJWKSet(
+      new URL(`${process.env.CLIENT_URL}/api/auth/jwks`),
+    );
+    const { payload } = await jwtVerify(token, JWKS);
+    req.user = payload;
+    next();
+  } catch (error) {
+    console.error("Token validation failed:", error);
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+};
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(process.env.DB_URI, {
@@ -34,7 +62,7 @@ async function run() {
     });
 
     //get signle car by id
-    app.get("/cars/:carId", async (req, res) => {
+    app.get("/cars/:carId", midlwareFunc, verifyToken, async (req, res) => {
       const { carId } = req.params;
       const query = { _id: new ObjectId(carId) };
       const result = await carsCollection.findOne(query);
@@ -48,7 +76,6 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result);
     });
-    
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
