@@ -153,6 +153,30 @@ async function run() {
       });
       res.json(result);
     });
+
+    // api for update car data
+    app.patch("/cars/my-added-cars/:carId",  async (req, res) => {
+      const { carId } = req.params;
+      const filter = {
+        _id: new ObjectId(carId),
+      };
+      const modifiedCar = req.body;
+      const updatedData = {
+        $set: {
+          name: modifiedCar.name,
+          dailyRentPrice: modifiedCar.dailyRentPrice,
+          carType: modifiedCar.carType,
+          image: modifiedCar.image,
+          seatCapacity: modifiedCar.seatCapacity,
+          pickupLocation: modifiedCar.pickupLocation,
+          description: modifiedCar.description,
+          availabilityStatus: modifiedCar.availabilityStatus,
+        },
+      };
+      const result = await carsCollection.updateOne(filter, updatedData);
+
+      res.send(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
