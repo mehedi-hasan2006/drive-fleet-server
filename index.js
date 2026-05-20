@@ -57,23 +57,24 @@ async function run() {
 
     // get all the cars
     app.get("/cars", async (req, res) => {
-      const { search } = req.query;
+      const search = req.query.search || "";
+      const type = req.query.type || "";
 
-      let cursor;
+      const query = {};
 
       if (search) {
-        cursor = await carsCollection.find({
-          name: {
-            $regex: search,
-            $options: "i",
-          },
-        });
-      } else {
-        cursor = carsCollection.find();
+        query.name = {
+          $regex: search,
+          $options: "i",
+        };
       }
 
-      const result = await cursor.toArray();
-      res.send(result);
+      if (type) {
+        query.carType = type;
+      }
+
+      const cars = await carsCollection.find(query).toArray();
+      res.send(cars);
     });
 
     //get signle car by id
@@ -155,7 +156,7 @@ async function run() {
     });
 
     // api for update car data
-    app.patch("/cars/my-added-cars/:carId",  async (req, res) => {
+    app.patch("/cars/my-added-cars/:carId", async (req, res) => {
       const { carId } = req.params;
       const filter = {
         _id: new ObjectId(carId),
