@@ -131,11 +131,26 @@ async function run() {
       res.send(result);
     });
 
-
     // api for store data from my my-added-car page
-    app.post("/cars",  async (req, res) => {
+    app.post("/cars", async (req, res) => {
       const carData = req.body;
       const result = carsCollection.insertOne(carData);
+      res.json(result);
+    });
+
+    // get api for accessing added car data from client
+    app.get("/cars/my-added-cars/:userId", async (req, res) => {
+      const { userId } = req.params;
+      const result = await carsCollection.find({ userId: userId }).toArray();
+      res.send(result);
+    });
+
+    // delete api for my added car data
+    app.delete("/cars/my-added-cars/:carId", async (req, res) => {
+      const { carId } = req.params;
+      const result = await carsCollection.deleteOne({
+        _id: new ObjectId(carId),
+      });
       res.json(result);
     });
   } finally {
