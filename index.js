@@ -62,7 +62,12 @@ async function run() {
       let cursor;
 
       if (search) {
-        cursor = carsCollection.find({ title: search });
+        cursor = await carsCollection.find({
+          name: {
+            $regex: search,
+            $options: "i",
+          },
+        });
       } else {
         cursor = carsCollection.find();
       }
@@ -125,7 +130,14 @@ async function run() {
 
       res.send(result);
     });
-    
+
+
+    // api for store data from my my-added-car page
+    app.post("/cars",  async (req, res) => {
+      const carData = req.body;
+      const result = carsCollection.insertOne(carData);
+      res.json(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
