@@ -11,18 +11,15 @@ dotenv.config();
 app.use(cors());
 app.use(express.json());
 
-// midlware function
-const midlwareFunc = (req, res, next) => {
-  next();
-};
-
 // verify token midleware
 const verifyToken = async (req, res, next) => {
   const { authorization } = req.headers;
   const token = authorization?.split(" ")[1];
 
   if (!token) {
-    return res.status(401).json({ message: "Unauthorized" });
+    return res
+      .status(401)
+      .json({ message: "Unauthorized. Verification Failed!!.." });
   }
 
   try {
@@ -49,7 +46,7 @@ const client = new MongoClient(process.env.DB_URI, {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
 
     const db = client.db("drive-fleet");
     const carsCollection = db.collection("cars");
@@ -78,7 +75,7 @@ async function run() {
     });
 
     //get signle car by id
-    app.get("/cars/:carId", midlwareFunc, verifyToken, async (req, res) => {
+    app.get("/cars/:carId", verifyToken, async (req, res) => {
       const { carId } = req.params;
       const query = { _id: new ObjectId(carId) };
       const result = await carsCollection.findOne(query);
@@ -122,7 +119,7 @@ async function run() {
       res.send(result);
     });
 
-    // get api for accessing booking data from client
+    // get api for accessing booking data from ui
     app.get("/bookings/:userId", verifyToken, async (req, res) => {
       const { userId } = req.params;
       const result = await bookingsCollection
@@ -132,22 +129,22 @@ async function run() {
       res.send(result);
     });
 
-    // api for store data from my my-added-car page
-    app.post("/cars", async (req, res) => {
+    // api for store data from add car page
+    app.post("/cars", verifyToken, async (req, res) => {
       const carData = req.body;
       const result = carsCollection.insertOne(carData);
       res.json(result);
     });
 
     // get api for accessing added car data from client
-    app.get("/cars/my-added-cars/:userId", async (req, res) => {
+    app.get("/cars/my-added-cars/:userId", verifyToken, async (req, res) => {
       const { userId } = req.params;
       const result = await carsCollection.find({ userId: userId }).toArray();
       res.send(result);
     });
 
     // delete api for my added car data
-    app.delete("/cars/my-added-cars/:carId", async (req, res) => {
+    app.delete("/cars/my-added-cars/:carId", verifyToken, async (req, res) => {
       const { carId } = req.params;
       const result = await carsCollection.deleteOne({
         _id: new ObjectId(carId),
@@ -156,7 +153,7 @@ async function run() {
     });
 
     // api for update car data
-    app.patch("/cars/my-added-cars/:carId", async (req, res) => {
+    app.patch("/cars/my-added-cars/:carId", verifyToken, async (req, res) => {
       const { carId } = req.params;
       const filter = {
         _id: new ObjectId(carId),
